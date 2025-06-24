@@ -26,12 +26,12 @@ interface Order {
   budget: string;
 }
 
-interface BasicTableOneProps {
+interface BlockUserTableProps {
   tableData: Order[];
   setTableData: React.Dispatch<React.SetStateAction<Order[]>>;
 }
 
-export default function BasicTableOne({ tableData, setTableData }: BasicTableOneProps) {
+export default function BlockUserTable({ tableData, setTableData }: BlockUserTableProps) {
   const [editOrder, setEditOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -78,7 +78,7 @@ export default function BasicTableOne({ tableData, setTableData }: BasicTableOne
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      <div className="max-w-full overflow-x-auto">
+      <div className="max-w-full ">
         <div className="">
           <Table>
             {/* Table Header */}

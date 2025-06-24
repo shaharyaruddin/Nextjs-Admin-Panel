@@ -26,12 +26,12 @@ interface Order {
   budget: string;
 }
 
-interface BasicTableOneProps {
+interface CategoriesTableProps {
   tableData: Order[];
   setTableData: React.Dispatch<React.SetStateAction<Order[]>>;
 }
 
-export default function BasicTableOne({ tableData, setTableData }: BasicTableOneProps) {
+export default function CategoriesTable({ tableData, setTableData }: CategoriesTableProps) {
   const [editOrder, setEditOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -88,31 +88,31 @@ export default function BasicTableOne({ tableData, setTableData }: BasicTableOne
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  User
+                  Name
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start textbasictableone text-theme-xs dark:text-gray-400"
                 >
-                  Project Name
+                  Slug
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Team
+                  Description
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Status
+                  meta title
                 </TableCell>
                 <TableCell
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  Budget
+                  meta description
                 </TableCell>
                 <TableCell
                   isHeader

@@ -22,11 +22,9 @@ TailAdmin provides essential UI components and layouts for building feature-rich
 - [📄 Documentation](https://tailadmin.com/docs)
 - [⬇️ Download](https://tailadmin.com/download)
 - [🖌️ Figma Design File (Community Edition)](https://www.figma.com/community/file/1463141366275764364)
-- [⚡ Get PRO Version](https://tailadmin.com/pricing)
 
 ### Demos
 - [Free Version](https://nextjs-free-demo.tailadmin.com)
-- [Pro Version](https://nextjs-demo.tailadmin.com)
 
 ### Other Versions
 - [HTML Version](https://github.com/TailAdmin/tailadmin-free-tailwind-dashboard-template)
@@ -86,12 +84,6 @@ All components are built with React and styled using Tailwind CSS for easy custo
 - 50+ UI elements
 - Basic Figma design files
 - Community support
-
-### Pro Version
-- 5 Unique Dashboards: Analytics, Ecommerce, Marketing, CRM, Stocks (more coming soon)
-- 400+ dashboard components and UI elements
-- Complete Figma design file
-- Email support
 
 To learn more about pro version features and pricing, visit our [pricing page](https://tailadmin.com/pricing).
 
