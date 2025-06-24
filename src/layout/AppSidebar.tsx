@@ -4,19 +4,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
-import { FaUsers } from "react-icons/fa";
+import { FaTools, FaUsers } from "react-icons/fa";
+import { TbCategoryFilled, TbScanPosition } from "react-icons/tb";
+import { IoIosPricetag } from "react-icons/io";
 
 import {
-  BoxCubeIcon,
-  CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  ListIcon,
-  PageIcon,
-  PieChartIcon,
   PlugInIcon,
-  TableIcon,
   UserCircleIcon,
 } from "../icons/index";
 
@@ -59,9 +55,35 @@ const navItems: NavItem[] = [
     ],
   },
    {
-     icon: <UserCircleIcon />,
+     icon: <TbCategoryFilled size={20} />,
      name: "Categories",
      path: "/categories",
+   },
+     {
+     icon: <UserCircleIcon size={20} />,
+     name: "Testimonials",
+     path: "/testimonials",
+   },
+       {
+     icon:  <FaTools size={20} />
+,
+     name: "Tools",
+     path: "/tools",
+   },
+     {
+     icon: <TbCategoryFilled size={20} />,
+     name: "Tags",
+     path: "/tags",
+   },
+     {
+     icon: <IoIosPricetag size={20} />,
+     name: "Pricing",
+     path: "/pricing",
+   },
+   {
+     icon: <TbScanPosition size={20} />,
+     name: "Role",
+     path: "/role",
    },
   // {
   //   name: "Pages",
