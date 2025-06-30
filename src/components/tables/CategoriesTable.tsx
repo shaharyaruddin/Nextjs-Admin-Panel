@@ -1,221 +1,167 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
   TableCell,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { MdDeleteForever } from "react-icons/md";
-import { FaRegEdit } from "react-icons/fa";
-import Badge from "../ui/badge/Badge";
-import Image from "next/image";
+} from '../ui/table';
+import { MdDeleteForever } from 'react-icons/md';
+import { FaRegEdit } from 'react-icons/fa';
 
-interface Order {
+interface Category {
   id: number;
-  user: {
-    image: string;
-    name: string;
-    role: string;
-  };
-  projectName: string;
-  team: {
-    images: string[];
-  };
-  status: string;
-  budget: string;
+  name: string;
+  slug: string;
+  description: string;
+  meta_title: string;
+  meta_description: string;
 }
 
 interface CategoriesTableProps {
-  tableData: Order[];
-  setTableData: React.Dispatch<React.SetStateAction<Order[]>>;
+  tableData: Category[];
+  setTableData: React.Dispatch<React.SetStateAction<Category[]>>;
 }
 
 export default function CategoriesTable({ tableData, setTableData }: CategoriesTableProps) {
-  const [editOrder, setEditOrder] = useState<Order | null>(null);
+  const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleEdit = (id: number) => {
-    const order = tableData.find((order) => order.id === id);
-    if (order) {
-      setEditOrder(order);
+    const category = tableData.find((cat) => cat.id === id);
+    if (category) {
+      setEditCategory(category);
       setIsModalOpen(true);
     }
   };
 
   const handleDelete = (id: number) => {
-    setTableData(tableData.filter((order) => order.id !== id));
+    setTableData(tableData.filter((cat) => cat.id !== id));
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!editOrder) return;
+    if (!editCategory) return;
 
     const formData = new FormData(e.currentTarget);
-    const updatedOrder: Order = {
-      ...editOrder,
-      user: {
-        ...editOrder.user,
-        name: formData.get("name") as string,
-        role: formData.get("role") as string,
-      },
-      projectName: formData.get("projectName") as string,
-      budget: formData.get("budget") as string,
-      status: formData.get("status") as string,
+    const updatedCategory: Category = {
+      ...editCategory,
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      description: formData.get('description') as string,
+      meta_title: formData.get('meta_title') as string,
+      meta_description: formData.get('meta_description') as string,
     };
 
     setTableData(
-      tableData.map((order) => (order.id === updatedOrder.id ? updatedOrder : order))
+      tableData.map((cat) => (cat.id === updatedCategory.id ? updatedCategory : cat))
     );
     setIsModalOpen(false);
-    setEditOrder(null);
+    setEditCategory(null);
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    setEditOrder(null);
+    setEditCategory(null);
   };
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
-        <div className="">
-          <Table>
-            {/* Table Header */}
-            <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-              <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Name
+        <Table>
+          {/* Table Header */}
+          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
+            <TableRow>
+              <TableCell
+                isHeader
+                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+              >
+                Name
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+              >
+                Slug
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+              >
+                Description
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+              >
+                Meta Title
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+              >
+                Meta Description
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+              >
+                Actions
+              </TableCell>
+            </TableRow>
+          </TableHeader>
+
+          {/* Table Body */}
+          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
+            {tableData.map((category) => (
+              <TableRow key={category.id}>
+                <TableCell className="px-5 py-4 sm:px-6 text-start">
+                  <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                    {category.name}
+                  </span>
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start textbasictableone text-theme-xs dark:text-gray-400"
-                >
-                  Slug
+                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                  {category.slug}
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Description
+                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                  {category.description}
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  meta title
+                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                  {category.meta_title}
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  meta description
+                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                  {category.meta_description}
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Actions
+                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(category.id)}
+                      className="p-1 text-gray-500 hover:text-green-500 dark:hover:text-green-400"
+                      title="Edit"
+                    >
+                      <FaRegEdit size={20} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(category.id)}
+                      className="p-1 text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+                      title="Delete"
+                    >
+                      <MdDeleteForever size={20} color="red" />
+                    </button>
+                  </div>
                 </TableCell>
               </TableRow>
-            </TableHeader>
-
-            {/* Table Body */}
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {tableData.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell className="px-5 py-4 sm:px-6 text-start">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 overflow-hidden rounded-full">
-                        <Image
-                          width={40}
-                          height={40}
-                          src={order.user.image}
-                          alt={order.user.name}
-                        />
-                      </div>
-                      <div>
-                        <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {order.user.name}
-                        </span>
-                        <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-                          {order.user.role}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    {order.projectName}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    <div className="flex -space-x-2">
-                      {order.team.images.map((teamImage, index) => (
-                        <div
-                          key={index}
-                          className="w-6 h-6 overflow-hidden border-2 border-white rounded-full dark:border-gray-900"
-                        >
-                          <Image
-                            width={24}
-                            height={24}
-                            src={teamImage}
-                            alt={`Team member ${index + 1}`}
-                            className="w-full"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    <Badge
-                      size="sm"
-                      color={
-                        order.status === "Active"
-                          ? "success"
-                          : order.status === "Pending"
-                          ? "warning"
-                          : "error"
-                      }
-                    >
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {order.budget}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(order.id)}
-                        className="p-1 text-gray-500 hover:text-green-500 dark:hover:text-green-400"
-                        title="Edit"
-                      >
-                        <FaRegEdit size={20} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(order.id)}
-                        className="p-1 text-gray-500 hover:text-red-500 dark:hover:text-red-400"
-                        title="Delete"
-                      >
-                        <MdDeleteForever size={20} color="red" />
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Edit Modal */}
-      {isModalOpen && editOrder && (
+      {isModalOpen && editCategory && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-medium text-gray-800 dark:text-white/90 mb-4">
-              Edit Order
+              Edit Category
             </h3>
             <form onSubmit={handleFormSubmit} className="space-y-4">
               <div>
@@ -225,61 +171,56 @@ export default function CategoriesTable({ tableData, setTableData }: CategoriesT
                 <input
                   type="text"
                   name="name"
-                  defaultValue={editOrder.user.name}
+                  defaultValue={editCategory.name}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Role
+                  Slug
                 </label>
                 <input
                   type="text"
-                  name="role"
-                  defaultValue={editOrder.user.role}
+                  name="slug"
+                  defaultValue={editCategory.slug}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Project Name
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  defaultValue={editCategory.description}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 dark:text-gray-400">
+                  Meta Title
                 </label>
                 <input
                   type="text"
-                  name="projectName"
-                  defaultValue={editOrder.projectName}
+                  name="meta_title"
+                  defaultValue={editCategory.meta_title}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Budget
+                  Meta Description
                 </label>
-                <input
-                  type="text"
-                  name="budget"
-                  defaultValue={editOrder.budget}
+                <textarea
+                  name="metaDescription"
+                  defaultValue={editCategory.meta_description}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Status
-                </label>
-                <select
-                  name="status"
-                  defaultValue={editOrder.status}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="Active">Active</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Cancel">Cancel</option>
-                </select>
               </div>
               <div className="flex justify-end gap-2">
                 <button

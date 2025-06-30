@@ -32,7 +32,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const newOrder = {
-      id: Date.now(), // Simple ID generation; replace with proper ID logic if needed
+      id: Date.now(),
       user: {
         image: "/images/user/default.jpg", // Default image; adjust as needed
         name: formData.get("name") as string,
@@ -52,6 +52,8 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   const handleModalClose = () => {
     setIsModalOpen(false);
   };
+
+
 
   return (
     <div
@@ -159,7 +161,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm text-white bg-blue-500 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
-                >
+               >
                   Add
                 </button>
               </div>
