@@ -1,84 +1,94 @@
+'use client';
+import React, { useState, useEffect } from 'react';
+import axios, { AxiosError } from 'axios';
 import {
   Table,
   TableBody,
   TableCell,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import Badge from "../ui/badge/Badge";
-import Image from "next/image";
+} from '../ui/table';
+import Badge from '../ui/badge/Badge';
+import Image from 'next/image';
+import { BASE_URL } from '@/components/common/common';
 
-// Define the TypeScript interface for the table rows
-interface Product {
-  id: number; // Unique identifier for each product
-  name: string; // Product name
+interface Tool {
+  id: number; // Unique identifier for each tool
+  name: string; // Tool name
   variants: string; // Number of variants (e.g., "1 Variant", "2 Variants")
-  category: string; // Category of the product
-  price: string; // Price of the product (as a string with currency symbol)
-  // status: string; // Status of the product
-  image: string; // URL or path to the product image
-  status: "Delivered" | "Pending" | "Canceled"; // Status of the product
+  category: string; // Category of the tool
+  price: string; // Price of the tool (as a string with currency symbol)
+  status: 'Delivered' | 'Pending' | 'Canceled'; // Status of the tool
+  image: string; // URL or path to the tool image
 }
 
-// Define the table data using the interface
-const tableData: Product[] = [
-  {
-    id: 1,
-    name: "MacBook Pro 13”",
-    variants: "2 Variants",
-    category: "Laptop",
-    price: "$2399.00",
-    status: "Delivered",
-    image: "/images/product/product-01.jpg", // Replace with actual image URL
-  },
-  {
-    id: 2,
-    name: "Apple Watch Ultra",
-    variants: "1 Variant",
-    category: "Watch",
-    price: "$879.00",
-    status: "Pending",
-    image: "/images/product/product-02.jpg", // Replace with actual image URL
-  },
-  {
-    id: 3,
-    name: "iPhone 15 Pro Max",
-    variants: "2 Variants",
-    category: "SmartPhone",
-    price: "$1869.00",
-    status: "Delivered",
-    image: "/images/product/product-03.jpg", // Replace with actual image URL
-  },
-  {
-    id: 4,
-    name: "iPad Pro 3rd Gen",
-    variants: "2 Variants",
-    category: "Electronics",
-    price: "$1699.00",
-    status: "Canceled",
-    image: "/images/product/product-04.jpg", // Replace with actual image URL
-  },
-  {
-    id: 5,
-    name: "AirPods Pro 2nd Gen",
-    variants: "1 Variant",
-    category: "Accessories",
-    price: "$240.00",
-    status: "Delivered",
-    image: "/images/product/product-05.jpg", // Replace with actual image URL
-  },
-];
+export default function RecentTools() {
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default function RecentOrders() {
+  useEffect(() => {
+    const fetchTools = async () => {
+      try {
+        setLoading(true);
+        console.log('API GET /api/tools');
+        const response = await axios.get(`${BASE_URL}/api/tools`);
+        console.log('API GET /api/tools response:', response.data);
+
+        let fetchedTools: any[] = [];
+        if (response.data.tools && Array.isArray(response.data.tools)) {
+          fetchedTools = response.data.tools;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          fetchedTools = response.data.data;
+        } else {
+          throw new Error('Invalid response format: missing tools or data');
+        }
+
+        // Map API response to Tool interface
+        const mappedTools: Tool[] = fetchedTools
+          .sort((a, b) => {
+            // Sort by createdAt (descending) if available, else by id
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : a.id;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : b.id;
+            return dateB - dateA;
+          })
+          .slice(0, 5) // Take top 5 recent tools
+          .map((tool, index) => ({
+            id: tool.id || index + 1,
+            name: tool.name || `Tool ${index + 1}`,
+            variants: tool.variants || '1 Variant',
+            category: tool.category || 'General',
+            price: tool.price ? `$${Number(tool.price).toFixed(2)}` : '$0.00',
+            status: (tool.status as 'Delivered' | 'Pending' | 'Canceled') || 'Pending',
+            image: tool.image || '/images/product/placeholder.jpg',
+          }));
+
+        setTools(mappedTools);
+      } catch (error: unknown) {
+        const err = error as AxiosError;
+        console.error('Error fetching tools:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+        setError(`Failed to fetch tools: ${err.message}`);
+        setTools([]); // Fallback to empty array
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTools();
+  }, []);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Recent Orders
+            Recent Tools
           </h3>
         </div>
-
         <div className="flex items-center gap-3">
           <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
             <svg
@@ -125,14 +135,13 @@ export default function RecentOrders() {
       </div>
       <div className="max-w-full overflow-x-auto">
         <Table>
-          {/* Table Header */}
           <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
             <TableRow>
               <TableCell
                 isHeader
                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Products
+                Tools
               </TableCell>
               <TableCell
                 isHeader
@@ -154,55 +163,72 @@ export default function RecentOrders() {
               </TableCell>
             </TableRow>
           </TableHeader>
-
-          {/* Table Body */}
-
           <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {tableData.map((product) => (
-              <TableRow key={product.id} className="">
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-[50px] w-[50px] overflow-hidden rounded-md">
-                      <Image
-                        width={50}
-                        height={50}
-                        src={product.image}
-                        className="h-[50px] w-[50px]"
-                        alt={product.name}
-                      />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                        {product.name}
-                      </p>
-                      <span className="text-gray-500 text-theme-xs dark:text-gray-400">
-                        {product.variants}
-                      </span>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {product.price}
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  {product.category}
-                </TableCell>
-                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                  <Badge
-                    size="sm"
-                    color={
-                      product.status === "Delivered"
-                        ? "success"
-                        : product.status === "Pending"
-                        ? "warning"
-                        : "error"
-                    }
-                  >
-                    {product.status}
-                  </Badge>
+            {loading ? (
+              <TableRow>
+                <TableCell  className="py-3 text-center text-gray-500 text-theme-sm dark:text-gray-400">
+                  Loading...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : error ? (
+              <TableRow>
+                <TableCell  className="py-3 text-center text-gray-500 text-theme-sm dark:text-gray-400">
+                  Error: {error}
+                </TableCell>
+              </TableRow>
+            ) : tools.length === 0 ? (
+              <TableRow>
+                <TableCell className="py-3 text-center text-gray-500 text-theme-sm dark:text-gray-400">
+                  No tools found
+                </TableCell>
+              </TableRow>
+            ) : (
+              tools.map((tool) => (
+                <TableRow key={tool.id}>
+                  <TableCell className="py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-[50px] w-[50px] overflow-hidden rounded-md">
+                        <Image
+                          width={50}
+                          height={50}
+                          src={tool.image}
+                          className="h-[50px] w-[50px]"
+                          alt={tool.name}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                          {tool.name}
+                        </p>
+                        <span className="text-gray-500 text-theme-xs dark:text-gray-400">
+                          {tool.variants}
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {tool.category}
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    {tool.price}
+                  </TableCell>
+                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                    <Badge
+                      size="sm"
+                      color={
+                        tool.status === 'Delivered'
+                          ? 'success'
+                          : tool.status === 'Pending'
+                          ? 'warning'
+                          : 'error'
+                      }
+                    >
+                      {tool.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

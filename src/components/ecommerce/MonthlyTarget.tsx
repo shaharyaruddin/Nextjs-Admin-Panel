@@ -1,24 +1,61 @@
-"use client";
-// import Chart from "react-apexcharts";
-import { ApexOptions } from "apexcharts";
+'use client';
+import React, { useState, useEffect } from 'react';
+import axios, { AxiosError } from 'axios';
+import { ApexOptions } from 'apexcharts';
+import dynamic from 'next/dynamic';
+import { Dropdown } from '../ui/dropdown/Dropdown';
+import { MoreDotIcon } from '@/icons';
+import { DropdownItem } from '../ui/dropdown/DropdownItem';
+import { BASE_URL } from '@/components/common/common';
 
-import dynamic from "next/dynamic";
-import { Dropdown } from "../ui/dropdown/Dropdown";
-import { MoreDotIcon } from "@/icons";
-import { useState } from "react";
-import { DropdownItem } from "../ui/dropdown/DropdownItem";
 // Dynamically import the ReactApexChart component
-const ReactApexChart = dynamic(() => import("react-apexcharts"), {
+const ReactApexChart = dynamic(() => import('react-apexcharts'), {
   ssr: false,
 });
 
 export default function MonthlyTarget() {
+  const [toolCount, setToolCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchTools = async () => {
+      try {
+        setLoading(true);
+        console.log('API GET /api/tools');
+        const response = await axios.get(`${BASE_URL}/api/tools`);
+        console.log('API GET /api/tools response:', response.data);
+        if (response.data.tools && Array.isArray(response.data.tools)) {
+          setToolCount(response.data.tools.length);
+        } else if (response.data.total !== undefined) {
+          setToolCount(response.data.total);
+        } else {
+          throw new Error('Invalid response format: missing tools or total');
+        }
+      } catch (error: unknown) {
+        const err = error as AxiosError;
+        console.error('Error fetching tools:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+        setError(`Failed to fetch tools: ${err.message}`);
+        setToolCount(0); // Fallback value
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTools();
+  }, []);
+
   const series = [75.55];
   const options: ApexOptions = {
-    colors: ["#465FFF"],
+    colors: ['#465FFF'],
     chart: {
-      fontFamily: "Outfit, sans-serif",
-      type: "radialBar",
+      fontFamily: 'Outfit, sans-serif',
+      type: 'radialBar',
       height: 330,
       sparkline: {
         enabled: true,
@@ -29,40 +66,38 @@ export default function MonthlyTarget() {
         startAngle: -85,
         endAngle: 85,
         hollow: {
-          size: "80%",
+          size: '80%',
         },
         track: {
-          background: "#E4E7EC",
-          strokeWidth: "100%",
-          margin: 5, // margin is in pixels
+          background: '#E4E7EC',
+          strokeWidth: '100%',
+          margin: 5,
         },
         dataLabels: {
           name: {
             show: false,
           },
           value: {
-            fontSize: "36px",
-            fontWeight: "600",
+            fontSize: '36px',
+            fontWeight: '600',
             offsetY: -40,
-            color: "#1D2939",
+            color: '#1D2939',
             formatter: function (val) {
-              return val + "%";
+              return val + '%';
             },
           },
         },
       },
     },
     fill: {
-      type: "solid",
-      colors: ["#465FFF"],
+      type: 'solid',
+      colors: ['#465FFF'],
     },
     stroke: {
-      lineCap: "round",
+      lineCap: 'round',
     },
-    labels: ["Progress"],
+    labels: ['Progress'],
   };
-
-  const [isOpen, setIsOpen] = useState(false);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -71,6 +106,14 @@ export default function MonthlyTarget() {
   function closeDropdown() {
     setIsOpen(false);
   }
+
+  const displayValue = loading
+    ? 'Loading...'
+    : error
+    ? 'Error'
+    : toolCount !== null
+    ? toolCount.toLocaleString()
+    : 'N/A';
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-white/[0.03]">
@@ -110,7 +153,7 @@ export default function MonthlyTarget() {
             </Dropdown>
           </div>
         </div>
-        <div className="relative ">
+        <div className="relative">
           <div className="max-h-[330px]">
             <ReactApexChart
               options={options}
@@ -119,14 +162,12 @@ export default function MonthlyTarget() {
               height={330}
             />
           </div>
-
           <span className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-[95%] rounded-full bg-success-50 px-3 py-1 text-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500">
             +10%
           </span>
         </div>
         <p className="mx-auto mt-10 w-full max-w-[380px] text-center text-sm text-gray-500 sm:text-base">
-          You earn $3287 today, it&apos;s higher than last month. Keep up your
-          good work!
+          You earn $3287 today, it’s higher than last month. Keep up your good work!
         </p>
       </div>
 
@@ -136,7 +177,7 @@ export default function MonthlyTarget() {
             Target
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            {displayValue}
             <svg
               width="16"
               height="16"
@@ -161,7 +202,7 @@ export default function MonthlyTarget() {
             Revenue
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            {displayValue}
             <svg
               width="16"
               height="16"
@@ -186,7 +227,7 @@ export default function MonthlyTarget() {
             Today
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            {displayValue}
             <svg
               width="16"
               height="16"
