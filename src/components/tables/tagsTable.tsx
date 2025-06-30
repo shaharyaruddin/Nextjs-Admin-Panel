@@ -1,20 +1,21 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import axios from 'axios';
 import {
   Table,
   TableBody,
   TableCell,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { MdDeleteForever } from "react-icons/md";
-import { FaRegEdit } from "react-icons/fa";
+} from '../ui/table';
+import { MdDeleteForever } from 'react-icons/md';
+import { FaRegEdit } from 'react-icons/fa';
+import { BASE_URL } from '@/components/common/common';
 
 interface Tag {
   id: number;
   name: string;
-  slug: string;
-  description: string | null;
-  created_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface TagsTableProps {
@@ -34,28 +35,41 @@ export default function TagsTable({ tableData, setTableData }: TagsTableProps) {
     }
   };
 
-  const handleDelete = (id: number) => {
-    setTableData(tableData.filter((item) => item.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`${BASE_URL}/api/tag/delete`, { data: { id } });
+      setTableData(tableData.filter((item) => item.id !== id));
+      alert('Tag deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting tag:', error);
+      alert('Failed to delete tag. Please try again.');
+    }
   };
 
-  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editTag) return;
 
     const formData = new FormData(e.currentTarget);
     const updatedTag: Tag = {
       ...editTag,
-      name: formData.get("name") as string,
-      slug: formData.get("slug") as string,
-      description: formData.get("description") as string | null,
-      created_at: editTag.created_at, // Preserve original created_at
+      name: formData.get('name') as string,
+      createdAt: editTag.createdAt,
+      updatedAt: new Date().toISOString(),
     };
 
-    setTableData(
-      tableData.map((item) => (item.id === updatedTag.id ? updatedTag : item))
-    );
-    setIsModalOpen(false);
-    setEditTag(null);
+    try {
+      await axios.put(`${BASE_URL}/api/tag/edit`, updatedTag);
+      setTableData(
+        tableData.map((item) => (item.id === updatedTag.id ? updatedTag : item))
+      );
+      setIsModalOpen(false);
+      setEditTag(null);
+      alert('Tag updated successfully!');
+    } catch (error) {
+      console.error('Error updating tag:', error);
+      alert('Failed to update tag. Please try again.');
+    }
   };
 
   const handleModalClose = () => {
@@ -67,7 +81,6 @@ export default function TagsTable({ tableData, setTableData }: TagsTableProps) {
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
         <Table>
-          {/* Table Header */}
           <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
             <TableRow>
               <TableCell
@@ -80,19 +93,13 @@ export default function TagsTable({ tableData, setTableData }: TagsTableProps) {
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Slug
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Description
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
                 Created At
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+              >
+                Updated At
               </TableCell>
               <TableCell
                 isHeader
@@ -102,8 +109,6 @@ export default function TagsTable({ tableData, setTableData }: TagsTableProps) {
               </TableCell>
             </TableRow>
           </TableHeader>
-
-          {/* Table Body */}
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {tableData.map((tag) => (
               <TableRow key={tag.id}>
@@ -113,13 +118,10 @@ export default function TagsTable({ tableData, setTableData }: TagsTableProps) {
                   </span>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {tag.slug}
+                  {new Date(tag.createdAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {tag.description ? tag.description.substring(0, 50) + "..." : "N/A"}
-                </TableCell>
-                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {new Date(tag.created_at).toLocaleDateString()}
+                  {new Date(tag.updatedAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                   <div className="flex gap-2">
@@ -144,8 +146,6 @@ export default function TagsTable({ tableData, setTableData }: TagsTableProps) {
           </TableBody>
         </Table>
       </div>
-
-      {/* Edit Modal */}
       {isModalOpen && editTag && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
@@ -163,29 +163,6 @@ export default function TagsTable({ tableData, setTableData }: TagsTableProps) {
                   defaultValue={editTag.name}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Slug
-                </label>
-                <input
-                  type="text"
-                  name="slug"
-                  defaultValue={editTag.slug}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  defaultValue={editTag.description || ""}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
                 />
               </div>
               <div className="flex justify-end gap-2">

@@ -1,157 +1,189 @@
-'use client'
-import React, { useState } from "react";
-import ComponentCard from "@/components/common/ComponentCard";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import ToolsTable from "@/components/tables/ToolsTable";
+'use client';
+import React, { useEffect, useState } from 'react';
+import axios, { AxiosError } from 'axios';
+import ComponentCard from '@/components/common/ComponentCard';
+import PageBreadcrumb from '@/components/common/PageBreadCrumb';
+import ToolsTable from '@/components/tables/ToolsTable';
+import { BASE_URL } from '@/components/common/common';
 
-interface Order {
-  id: number;
-  user: {
-    image: string;
-    name: string;
-    role: string;
-  };
-  projectName: string;
-  team: {
-    images: string[];
-  };
-  status: string;
-  budget: string;
+interface FormField {
+  name: string;
+  label: string;
+  type: 'text' | 'textarea' | 'select' | 'date';
+  required?: boolean;
+  options?: string[];
 }
 
 interface Tool {
   id: number;
   name: string;
-  slug: string;
+  sub_category_id: string;
+  rating: number;
+  comment: string | null;
   description: string;
-  image_url: string;
-  website_url: string | null;
-  pricing_model: "free" | "freemium" | "paid" | "one-time";
-  category: { id: number; name: string } | null;
-  subcategory: { id: number; name: string } | null;
-  is_featured: boolean;
-  is_approved: boolean;
-  meta_title: string | null;
-  meta_description: string | null;
-  user: { id: number; name: string } | null;
+  age: number | null;
+  visit_link: string;
+  pricing_plan_id: string;
+  tags: string;
+  release_date: string | null;
+  github: string | null;
+  youtube: string | null;
+  X: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Initial table data
-const initialTableData: Order[] = [
-  {
-    id: 1,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Lindsey Curtis",
-      role: "Web Designer",
-    },
-    projectName: "Agency Website",
-    team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    budget: "3.9K",
-    status: "Active",
-  },
-  {
-    id: 2,
-    user: {
-      image: "/images/user/user-18.jpg",
-      name: "Kaiya George",
-      role: "Project Manager",
-    },
-    projectName: "Technology",
-    team: {
-      images: ["/images/user/user-25.jpg", "/images/user/user-26.jpg"],
-    },
-    budget: "24.9K",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Zain Geidt",
-      role: "Content Writing",
-    },
-    projectName: "Blog Writing",
-    team: {
-      images: ["/images/user/user-27.jpg"],
-    },
-    budget: "12.7K",
-    status: "Active",
-  },
-  {
-    id: 4,
-    user: {
-      image: "/images/user/user-20.jpg",
-      name: "Abram Schleifer",
-      role: "Digital Marketer",
-    },
-    projectName: "Social Media",
-    team: {
-      images: [
-        "/images/user/user-28.jpg",
-        "/images/user/user-29.jpg",
-        "/images/user/user-30.jpg",
-      ],
-    },
-    budget: "2.8K",
-    status: "Cancel",
-  },
-  {
-    id: 5,
-    user: {
-      image: "/images/user/user-21.jpg",
-      name: "Carla George",
-      role: "Front-end Developer",
-    },
-    projectName: "Website",
-    team: {
-      images: [
-        "/images/user/user-31.jpg",
-        "/images/user/user-32.jpg",
-        "/images/user/user-33.jpg",
-      ],
-    },
-    budget: "4.5K",
-    status: "Active",
-  },
+const toolFields: FormField[] = [
+  { name: 'name', label: 'Tool Name', type: 'text', required: true },
+  { name: 'sub_category_id', label: 'Sub-Category ID', type: 'text', required: true },
+  { name: 'rating', label: 'Rating', type: 'text', required: true },
+  { name: 'comment', label: 'Comment', type: 'textarea', required: false },
+  { name: 'description', label: 'Description', type: 'textarea', required: true },
+  { name: 'age', label: 'Age', type: 'text', required: false },
+  { name: 'visit_link', label: 'Visit Link', type: 'text', required: true },
+  { name: 'pricing_plan_id', label: 'Pricing Plan ID', type: 'text', required: true },
+  { name: 'tags', label: 'Tags', type: 'text', required: true },
+  { name: 'release_date', label: 'Release Date', type: 'date', required: false },
+  { name: 'github', label: 'GitHub URL', type: 'text', required: false },
+  { name: 'youtube', label: 'YouTube URL', type: 'text', required: false },
+  { name: 'X', label: 'X URL', type: 'text', required: false },
+  { name: 'facebook', label: 'Facebook URL', type: 'text', required: false },
+  { name: 'instagram', label: 'Instagram URL', type: 'text', required: false },
 ];
 
-// Transform Order to Tool
-const transformOrderToTool = (order: Order): Tool => ({
-  id: order.id,
-  name: order.projectName,
-  slug: order.projectName.toLowerCase().replace(/\s+/g, "-"),
-  description: `${order.projectName} description.`,
-  image_url: order.user.image,
-  website_url: null,
-  pricing_model:
-    order.status === "Active" ? "freemium" : order.status === "Pending" ? "free" : "paid",
-  category: { id: 1, name: "Default Category" },
-  subcategory: { id: 1, name: "Default Subcategory" },
-  is_featured: order.status === "Active",
-  is_approved: order.status !== "Cancel",
-  meta_title: `${order.projectName} Meta Title`,
-  meta_description: `${order.projectName} Meta Description`,
-  user: { id: order.id, name: order.user.name },
-});
-
 export default function BasicTables() {
-  const [tableData, setTableData] = useState<Tool[]>(
-    initialTableData.map(transformOrderToTool)
-  );
+  const [tableData, setTableData] = useState<Tool[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(`${BASE_URL}/api/tools`);
+        console.log('API GET /api/tools response:', response.data);
+        if (!response.data.tools) {
+          throw new Error('No tools data in response');
+        }
+        const tools = Array.isArray(response.data.tools) ? response.data.tools : [];
+        const validatedTools = tools.map((tool: any) => ({
+          id: tool.id ?? 0,
+          name: tool.name ?? '',
+          sub_category_id: tool.sub_category_id ?? '',
+          rating: Number(tool.rating) || 0,
+          comment: tool.comment ?? null,
+          description: tool.description ?? '',
+          age: tool.age ? Number(tool.age) : null,
+          visit_link: tool.visit_link ?? '',
+          pricing_plan_id: tool.pricing_plan_id ?? '',
+          tags: tool.tags ?? '',
+          release_date: tool.release_date ?? null,
+          github: tool.github ?? null,
+          youtube: tool.youtube ?? null,
+          X: tool.X ?? null,
+          facebook: tool.facebook ?? null,
+          instagram: tool.instagram ?? null,
+          createdAt: tool.createdAt ?? new Date().toISOString(),
+          updatedAt: tool.updatedAt ?? new Date().toISOString(),
+        }));
+        setTableData(validatedTools);
+      } catch (error: unknown) {
+        const err = error as AxiosError;
+        console.error('Error fetching tools:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+        setError(`Failed to fetch tools: ${err.message}. Check console for details.`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleAddNew = async (newTool: Omit<Tool, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      // Validate required fields
+      const requiredFields = ['name', 'sub_category_id', 'rating', 'description', 'visit_link', 'pricing_plan_id', 'tags'];
+      for (const field of requiredFields) {
+        if (!newTool[field as keyof typeof newTool]) {
+          throw new Error(`Missing required field: ${field}`);
+        }
+      }
+
+      // Validate and parse numeric fields
+      const ratingValue = parseFloat(newTool.rating as unknown as string);
+      if (isNaN(ratingValue)) {
+        throw new Error('Invalid rating: must be a valid number');
+      }
+      const ageValue = newTool.age ? parseInt(newTool.age as unknown as string) : null;
+      if (newTool.age && ageValue !== null && isNaN(ageValue)) {
+        throw new Error('Invalid age: must be a valid integer');
+      }
+
+      const payload = {
+        ...newTool,
+        rating: ratingValue,
+        age: ageValue,
+      };
+      console.log('API POST /api/tool/add payload:', payload);
+      const response = await axios.post(`${BASE_URL}/api/tool/add`, payload);
+      console.log('API POST /api/tool/add response:', response.data);
+
+      if (!response.data.tool) {
+        throw new Error('No tool data in response');
+      }
+
+      const addedTool: Tool = {
+        ...response.data.tool,
+        id: response.data.tool.id ?? 0,
+        rating: Number(response.data.tool.rating) || 0,
+        age: response.data.tool.age ? Number(response.data.tool.age) : null,
+        createdAt: response.data.tool.createdAt ?? new Date().toISOString(),
+        updatedAt: response.data.tool.updatedAt ?? new Date().toISOString(),
+      };
+      setTableData((prevData) => [...prevData, addedTool]);
+      alert('Tool added successfully!');
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error('Error adding tool:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      alert(`Failed to add tool: ${err.message}. Check console for details.`);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-red-500 dark:text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div>
       <PageBreadcrumb pageTitle="Tools" />
       <div className="space-y-6">
-        <ComponentCard title="Manage Tools" >
+        <ComponentCard<Tool>
+          title="Manage Tools"
+          formFields={toolFields}
+          onAddNew={handleAddNew}
+        >
           <ToolsTable tableData={tableData} setTableData={setTableData} />
         </ComponentCard>
       </div>

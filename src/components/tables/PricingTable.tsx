@@ -1,22 +1,22 @@
-import React, { useState } from "react";
+'use client'
+import React, { useState } from 'react';
+import axios from 'axios';
 import {
   Table,
   TableBody,
   TableCell,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { MdDeleteForever } from "react-icons/md";
-import { FaRegEdit } from "react-icons/fa";
-import Badge from "../ui/badge/Badge";
+} from '../ui/table';
+import { MdDeleteForever } from 'react-icons/md';
+import { FaRegEdit } from 'react-icons/fa';
+import { BASE_URL } from '@/components/common/common';
 
 interface Pricing {
   id: number;
-  plan_name: string;
-  price: number;
-  features: string[] | null;
-  is_active: boolean;
-  created_at: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PricingTableProps {
@@ -36,29 +36,41 @@ export default function PricingTable({ tableData, setTableData }: PricingTablePr
     }
   };
 
-  const handleDelete = (id: number) => {
-    setTableData(tableData.filter((item) => item.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`${BASE_URL}/api/pricing/delete`, { data: { id } });
+      setTableData(tableData.filter((item) => item.id !== id));
+      alert('Pricing plan deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting pricing plan:', error);
+      alert('Failed to delete pricing plan. Please try again.');
+    }
   };
 
-  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editPricing) return;
 
     const formData = new FormData(e.currentTarget);
     const updatedPricing: Pricing = {
       ...editPricing,
-      plan_name: formData.get("plan_name") as string,
-      price: Number(formData.get("price")),
-      features: formData.get("features")?.toString().split(",").map((f) => f.trim()) || null,
-      is_active: formData.get("is_active") === "true",
-      created_at: editPricing.created_at, // Preserve original created_at
+      name: formData.get('name') as string,
+      createdAt: editPricing.createdAt,
+      updatedAt: new Date().toISOString(),
     };
 
-    setTableData(
-      tableData.map((item) => (item.id === updatedPricing.id ? updatedPricing : item))
-    );
-    setIsModalOpen(false);
-    setEditPricing(null);
+    try {
+      await axios.put(`${BASE_URL}/api/pricing/edit`, updatedPricing);
+      setTableData(
+        tableData.map((item) => (item.id === updatedPricing.id ? updatedPricing : item))
+      );
+      setIsModalOpen(false);
+      setEditPricing(null);
+      alert('Pricing plan updated successfully!');
+    } catch (error) {
+      console.error('Error updating pricing plan:', error);
+      alert('Failed to update pricing plan. Please try again.');
+    }
   };
 
   const handleModalClose = () => {
@@ -70,7 +82,6 @@ export default function PricingTable({ tableData, setTableData }: PricingTablePr
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
         <Table>
-          {/* Table Header */}
           <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
             <TableRow>
               <TableCell
@@ -83,19 +94,13 @@ export default function PricingTable({ tableData, setTableData }: PricingTablePr
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Price
+                Created At
               </TableCell>
               <TableCell
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Features
-              </TableCell>
-              <TableCell
-                isHeader
-                className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-              >
-                Status
+                Updated At
               </TableCell>
               <TableCell
                 isHeader
@@ -105,26 +110,19 @@ export default function PricingTable({ tableData, setTableData }: PricingTablePr
               </TableCell>
             </TableRow>
           </TableHeader>
-
-          {/* Table Body */}
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {tableData.map((pricing) => (
+            {tableData?.map((pricing) => (
               <TableRow key={pricing.id}>
                 <TableCell className="px-5 py-4 sm:px-6 text-start">
                   <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                    {pricing.plan_name}
+                    {pricing.name}
                   </span>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  ${pricing.price.toFixed(2)}
+                  {new Date(pricing.createdAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {pricing.features ? pricing.features.join(", ").substring(0, 50) + "..." : "N/A"}
-                </TableCell>
-                <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  <Badge size="sm" color={pricing.is_active ? "success" : "error"}>
-                    {pricing.is_active ? "Active" : "Inactive"}
-                  </Badge>
+                  {new Date(pricing.updatedAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                   <div className="flex gap-2">
@@ -149,8 +147,6 @@ export default function PricingTable({ tableData, setTableData }: PricingTablePr
           </TableBody>
         </Table>
       </div>
-
-      {/* Edit Modal */}
       {isModalOpen && editPricing && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
@@ -159,55 +155,16 @@ export default function PricingTable({ tableData, setTableData }: PricingTablePr
             </h3>
             <form onSubmit={handleFormSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-500 dark:text-gray-400">
+                <label className="block text-sm text-gray-500 multi-line-label">
                   Plan Name
                 </label>
                 <input
                   type="text"
-                  name="plan_name"
-                  defaultValue={editPricing.plan_name}
+                  name="name"
+                  defaultValue={editPricing.name}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Price
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  defaultValue={editPricing.price}
-                  min="0"
-                  step="0.01"
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Features (comma-separated)
-                </label>
-                <textarea
-                  name="features"
-                  defaultValue={editPricing.features?.join(", ") || ""}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Status
-                </label>
-                <select
-                  name="is_active"
-                  defaultValue={editPricing.is_active.toString()}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
               </div>
               <div className="flex justify-end gap-2">
                 <button

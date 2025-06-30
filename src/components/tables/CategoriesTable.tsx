@@ -8,6 +8,8 @@ import {
 } from '../ui/table';
 import { MdDeleteForever } from 'react-icons/md';
 import { FaRegEdit } from 'react-icons/fa';
+import axios from 'axios';
+import { BASE_URL } from '@/components/common/common';
 
 interface Category {
   id: number;
@@ -35,11 +37,18 @@ export default function CategoriesTable({ tableData, setTableData }: CategoriesT
     }
   };
 
-  const handleDelete = (id: number) => {
-    setTableData(tableData.filter((cat) => cat.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`${BASE_URL}/category/delete`, { data: { id } });
+      setTableData(tableData.filter((cat) => cat.id !== id));
+      alert('Category deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      alert('Failed to delete category. Please try again.');
+    }
   };
 
-  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editCategory) return;
 
@@ -53,11 +62,18 @@ export default function CategoriesTable({ tableData, setTableData }: CategoriesT
       meta_description: formData.get('meta_description') as string,
     };
 
-    setTableData(
-      tableData.map((cat) => (cat.id === updatedCategory.id ? updatedCategory : cat))
-    );
-    setIsModalOpen(false);
-    setEditCategory(null);
+    try {
+      await axios.put(`${BASE_URL}/category/edit`, updatedCategory);
+      setTableData(
+        tableData.map((cat) => (cat.id === updatedCategory.id ? updatedCategory : cat))
+      );
+      setIsModalOpen(false);
+      setEditCategory(null);
+      alert('Category updated successfully!');
+    } catch (error) {
+      console.error('Error updating category:', error);
+      alert('Failed to update category. Please try again.');
+    }
   };
 
   const handleModalClose = () => {
@@ -216,7 +232,7 @@ export default function CategoriesTable({ tableData, setTableData }: CategoriesT
                   Meta Description
                 </label>
                 <textarea
-                  name="metaDescription"
+                  name="meta_description"
                   defaultValue={editCategory.meta_description}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required

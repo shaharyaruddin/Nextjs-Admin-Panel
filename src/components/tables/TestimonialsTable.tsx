@@ -1,25 +1,24 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
   TableCell,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { MdDeleteForever } from "react-icons/md";
-import { FaRegEdit } from "react-icons/fa";
-import Badge from "../ui/badge/Badge";
-import Image from "next/image";
+} from '../ui/table';
+import { MdDeleteForever } from 'react-icons/md';
+import { FaRegEdit } from 'react-icons/fa';
+import axios from 'axios';
+import { BASE_URL } from '@/components/common/common';
 
 interface Testimonial {
   id: number;
-  user: {
-    image: string;
-    name: string;
-  };
-  testimonial: string;
-  rating: number;
-  date: string;
+  name: string;
+  designation: string;
+  message: string;
+  image: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface TestimonialsTableProps {
@@ -32,38 +31,51 @@ export default function TestimonialsTable({ tableData, setTableData }: Testimoni
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleEdit = (id: number) => {
-    const testimonial = tableData.find((item) => item.id === id);
+    const testimonial = tableData.find((t) => t.id === id);
     if (testimonial) {
       setEditTestimonial(testimonial);
       setIsModalOpen(true);
     }
   };
 
-  const handleDelete = (id: number) => {
-    setTableData(tableData.filter((item) => item.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`${BASE_URL}/api/testimonial/delete`, { data: { id } });
+      setTableData(tableData.filter((t) => t.id !== id));
+      alert('Testimonial deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting testimonial:', error);
+      alert('Failed to delete testimonial. Please try again.');
+    }
   };
 
-  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editTestimonial) return;
 
     const formData = new FormData(e.currentTarget);
     const updatedTestimonial: Testimonial = {
       ...editTestimonial,
-      user: {
-        ...editTestimonial.user,
-        name: formData.get("name") as string,
-      },
-      testimonial: formData.get("testimonial") as string,
-      rating: Number(formData.get("rating")),
-      date: formData.get("date") as string,
+      name: formData.get('name') as string,
+      designation: formData.get('designation') as string,
+      message: formData.get('message') as string,
+      image: formData.get('image') as string || null,
+      createdAt: editTestimonial.createdAt, // Preserve original createdAt
+      updatedAt: new Date().toISOString(), // Update timestamp
     };
 
-    setTableData(
-      tableData.map((item) => (item.id === updatedTestimonial.id ? updatedTestimonial : item))
-    );
-    setIsModalOpen(false);
-    setEditTestimonial(null);
+    try {
+      await axios.put(`${BASE_URL}/api/testimonial/edit`, updatedTestimonial);
+      setTableData(
+        tableData.map((t) => (t.id === updatedTestimonial.id ? updatedTestimonial : t))
+      );
+      setIsModalOpen(false);
+      setEditTestimonial(null);
+      alert('Testimonial updated successfully!');
+    } catch (error) {
+      console.error('Error updating testimonial:', error);
+      alert('Failed to update testimonial. Please try again.');
+    }
   };
 
   const handleModalClose = () => {
@@ -75,7 +87,6 @@ export default function TestimonialsTable({ tableData, setTableData }: Testimoni
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
         <Table>
-          {/* Table Header */}
           <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
             <TableRow>
               <TableCell
@@ -88,19 +99,19 @@ export default function TestimonialsTable({ tableData, setTableData }: Testimoni
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Testimonial
+                Designation
               </TableCell>
               <TableCell
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Rating
+                Message
               </TableCell>
               <TableCell
                 isHeader
                 className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
               >
-                Date
+                Image
               </TableCell>
               <TableCell
                 isHeader
@@ -110,39 +121,30 @@ export default function TestimonialsTable({ tableData, setTableData }: Testimoni
               </TableCell>
             </TableRow>
           </TableHeader>
-
-          {/* Table Body */}
           <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
             {tableData.map((testimonial) => (
               <TableRow key={testimonial.id}>
                 <TableCell className="px-5 py-4 sm:px-6 text-start">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 overflow-hidden rounded-full">
-                      <Image
-                        width={40}
-                        height={40}
-                        src={testimonial.user.image}
-                        alt={testimonial.user.name}
-                      />
-                    </div>
-                    <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                      {testimonial.user.name}
-                    </span>
-                  </div>
+                  <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                    {testimonial.name}
+                  </span>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {testimonial.testimonial}
+                  {testimonial.designation}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  <Badge
-                    size="sm"
-                    color={testimonial.rating >= 4 ? "success" : testimonial.rating >= 3 ? "warning" : "error"}
-                  >
-                    {testimonial.rating}/5
-                  </Badge>
+                  {testimonial.message}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                  {testimonial.date}
+                  {testimonial.image ? (
+                    <img
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    'No Image'
+                  )}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                   <div className="flex gap-2">
@@ -167,8 +169,6 @@ export default function TestimonialsTable({ tableData, setTableData }: Testimoni
           </TableBody>
         </Table>
       </div>
-
-      {/* Edit Modal */}
       {isModalOpen && editTestimonial && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md">
@@ -183,47 +183,43 @@ export default function TestimonialsTable({ tableData, setTableData }: Testimoni
                 <input
                   type="text"
                   name="name"
-                  defaultValue={editTestimonial.user.name}
+                  defaultValue={editTestimonial.name}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Testimonial
+                  Designation
+                </label>
+                <input
+                  type="text"
+                  name="designation"
+                  defaultValue={editTestimonial.designation}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 dark:text-gray-400">
+                  Testimonial Message
                 </label>
                 <textarea
-                  name="testimonial"
-                  defaultValue={editTestimonial.testimonial}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Rating
-                </label>
-                <input
-                  type="number"
-                  name="rating"
-                  defaultValue={editTestimonial.rating}
-                  min="1"
-                  max="5"
+                  name="message"
+                  defaultValue={editTestimonial.message}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm text-gray-500 dark:text-gray-400">
-                  Date
+                  Image URL
                 </label>
                 <input
-                  type="date"
-                  name="date"
-                  defaultValue={editTestimonial.date}
+                  type="text"
+                  name="image"
+                  defaultValue={editTestimonial.image || ''}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
                 />
               </div>
               <div className="flex justify-end gap-2">

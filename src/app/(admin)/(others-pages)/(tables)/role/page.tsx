@@ -1,137 +1,90 @@
-'use client'
-import React, { useState } from "react";
-import ComponentCard from "@/components/common/ComponentCard";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import RoleTable from "@/components/tables/RoleTable";
+'use client';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import ComponentCard from '@/components/common/ComponentCard';
+import PageBreadcrumb from '@/components/common/PageBreadCrumb';
+import RoleTable from '@/components/tables/RoleTable';
+import { BASE_URL } from '@/components/common/common';
 
-interface Order {
-  id: number;
-  user: {
-    image: string;
-    name: string;
-    role: string;
-  };
-  projectName: string;
-  team: {
-    images: string[];
-  };
-  status: string;
-  budget: string;
+interface FormField {
+  name: string;
+  label: string;
+  type: 'text' | 'textarea' | 'select' | 'date';
+  required?: boolean;
+  options?: string[];
 }
 
 interface Role {
   id: number;
-  name: string;
-  description: string | null;
-  is_active: boolean;
-  created_at: string;
+  role_name: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Initial table data
-const initialTableData: Order[] = [
-  {
-    id: 1,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Lindsey Curtis",
-      role: "Web Designer",
-    },
-    projectName: "Agency Website",
-    team: {
-      images: [
-        "/images/user/user-22.jpg",
-        "/images/user/user-23.jpg",
-        "/images/user/user-24.jpg",
-      ],
-    },
-    budget: "3.9K",
-    status: "Active",
-  },
-  {
-    id: 2,
-    user: {
-      image: "/images/user/user-18.jpg",
-      name: "Kaiya George",
-      role: "Project Manager",
-    },
-    projectName: "Technology",
-    team: {
-      images: ["/images/user/user-25.jpg", "/images/user/user-26.jpg"],
-    },
-    budget: "24.9K",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    user: {
-      image: "/images/user/user-17.jpg",
-      name: "Zain Geidt",
-      role: "Content Writing",
-    },
-    projectName: "Blog Writing",
-    team: {
-      images: ["/images/user/user-27.jpg"],
-    },
-    budget: "12.7K",
-    status: "Active",
-  },
-  {
-    id: 4,
-    user: {
-      image: "/images/user/user-20.jpg",
-      name: "Abram Schleifer",
-      role: "Digital Marketer",
-    },
-    projectName: "Social Media",
-    team: {
-      images: [
-        "/images/user/user-28.jpg",
-        "/images/user/user-29.jpg",
-        "/images/user/user-30.jpg",
-      ],
-    },
-    budget: "2.8K",
-    status: "Cancel",
-  },
-  {
-    id: 5,
-    user: {
-      image: "/images/user/user-21.jpg",
-      name: "Carla George",
-      role: "Front-end Developer",
-    },
-    projectName: "Website",
-    team: {
-      images: [
-        "/images/user/user-31.jpg",
-        "/images/user/user-32.jpg",
-        "/images/user/user-33.jpg",
-      ],
-    },
-    budget: "4.5K",
-    status: "Active",
-  },
+const roleFields: FormField[] = [
+  { name: 'role_name', label: 'Role Name', type: 'text', required: true },
 ];
 
-// Transform Order to Role
-const transformOrderToRole = (order: Order): Role => ({
-  id: order.id,
-  name: order.user.role,
-  description: `Role for ${order.user.name} in ${order.projectName}.`,
-  is_active: order.status !== "Cancel",
-  created_at: new Date().toISOString().split("T")[0], 
-});
-
 export default function BasicTables() {
-  const [tableData, setTableData] = useState<Role[]>(
-    initialTableData.map(transformOrderToRole)
-  );
+  const [tableData, setTableData] = useState<Role[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(`${BASE_URL}/api/roles`);
+        console.log('API response:', response.data.roles);
+        setTableData(Array.isArray(response.data.roles) ? response.data.roles : []);
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        setError('Failed to fetch roles. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleAddNew = async (newRole: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/api/role/add`, newRole);
+      console.log('Add response:', response.data.role);
+      setTableData((prevData) => [...prevData, response.data.role]);
+      alert('Role added successfully!');
+    } catch (error) {
+      console.error('Error adding role:', error);
+      alert('Failed to add role. Please try again.');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-red-500 dark:text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div>
       <PageBreadcrumb pageTitle="Roles" />
       <div className="space-y-6">
-        <ComponentCard title="Manage Roles">
+        <ComponentCard<Role>
+          title="Manage Roles"
+          formFields={roleFields}
+          onAddNew={handleAddNew}
+        >
           <RoleTable tableData={tableData} setTableData={setTableData} />
         </ComponentCard>
       </div>
